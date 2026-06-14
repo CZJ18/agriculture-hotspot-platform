@@ -1,0 +1,14 @@
+{
+  "name": "hotspot-ai-frontend-contract",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@vitejs/plugin-vue": "^5.0.5",
+    "axios": "^1.7.2",
+    "echarts": "^5.5.1",
+    "element-plus": "^2.7.6",
+    "vite": "^5.3.3",
+    "vue": "^3.4.31"
+  }
+}

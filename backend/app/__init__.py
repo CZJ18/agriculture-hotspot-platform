@@ -1,0 +1,1 @@
+"""Hotspot AI backend package."""

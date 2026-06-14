@@ -1,0 +1,377 @@
+﻿请帮我开发一个完整项目，项目名称为：
+《多平台热点聚合与 AI 趋势分析系统》
+一、项目目标
+开发一个 Web 系统，用于采集多个公开网站/平台的热点数据，并在网页端进行展示、筛选、趋势分析、AI 总结和 Excel 导出。
+系统需要支持两种数据来源：
+1. 固定平台热点采集
+   - 例如 B站热门、知乎热榜、微博热搜、GitHub Trending、Hacker News、新闻 RSS 等。
+   - 只采集公开页面或公开接口中的热点元数据。
+   - 不下载视频，不绕过登录，不破解接口，不绕过验证码，不抓取隐私数据。
+2. 用户自定义链接采集
+   - 用户可以在网页端粘贴一个公开网页链接。
+   - 系统自动进行 URL 安全校验。
+   - 系统抓取该页面的标题、描述、正文摘要等公开信息。
+   - 然后调用 AI 生成摘要、关键词、情绪判断、内容分类和趋势观点。
+   - 最终保存到数据库并展示在网页端。
+系统最终应包含：
+- 爬虫采集模块
+- 数据库存储模块
+- FastAPI 后端接口
+- Vue 3 前端页面
+- AI 分析模块
+- Excel 导出模块
+- 定时任务模块
+- MCP Server 扩展接口
+- 安全校验模块
+- README 部署说明
+二、技术栈要求
+后端：
+- Python
+- FastAPI
+- SQLAlchemy
+- SQLite 起步，代码结构要方便后期切换 MySQL 或 PostgreSQL
+- requests
+- BeautifulSoup
+- openpyxl 或 pandas
+- APScheduler
+- python-dotenv
+- uvicorn
+前端：
+- Vue 3
+- Vite
+- Element Plus
+- ECharts
+- Axios
+AI：
+- AI 调用做成独立模块
+- API Key 通过环境变量配置
+- 不要把 API Key 写死在代码里
+- 需要支持后续替换 OpenAI / DeepSeek / 通义千问 / 豆包等模型服务
+MCP：
+- TypeScript
+- @modelcontextprotocol/sdk
+- Streamable HTTP transport
+- /mcp endpoint
+- Bearer Token 鉴权
+- Origin 校验
+- MCP Server 只作为 AI Agent 扩展接口，不替代原有 FastAPI 后端
+部署：
+- 推荐 Ubuntu 云服务器
+- Nginx 反向代理
+- systemd 或 Docker 保持后端常驻
+- 前端可部署到服务器 Nginx 或 Vercel
+- 后端、数据库、爬虫、AI 分析任务放在云服务器
+三、整体架构
+请按照以下架构开发：
+固定平台热榜 / 新闻 RSS / GitHub Trending / 用户自定义链接
+        ↓
+爬虫采集模块
+        ↓
+数据清洗与统一字段
+        ↓
+数据库 SQLite / MySQL
+        ↓
+FastAPI 后端接口
+        ↓
+Vue 3 前端网页展示
+        ↓
+AI 分析模块
+        ↓
+趋势总结 / 关键词 / 情绪 / 分类 / 内容选题建议
+        ↓
+Excel 导出 / 网页展示 / MCP 工具调用
+MCP Server 架构：
+AI Agent / Cursor / Claude / 其他智能体
+        ↓
+MCP Server
+        ↓
+调用 FastAPI 内部接口
+        ↓
+查询热点数据 / 获取 AI 分析 / 导出报告
+四、项目目录结构要求
+请按照类似以下结构生成项目：
+hotspot-ai-system/
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── config.py
+│   │   ├── database.py
+│   │   ├── models/
+│   │   │   ├── hotspot.py
+│   │   │   ├── analysis.py
+│   │   │   └── custom_url_task.py
+│   │   ├── schemas/
+│   │   │   ├── hotspot.py
+│   │   │   ├── analysis.py
+│   │   │   └── custom_url.py
+│   │   ├── routers/
+│   │   │   ├── hotspots.py
+│   │   │   ├── crawler.py
+│   │   │   ├── analysis.py
+│   │   │   ├── export.py
+│   │   │   └── custom_url.py
+│   │   ├── crawlers/
+│   │   │   ├── base.py
+│   │   │   ├── bilibili.py
+│   │   │   ├── zhihu.py
+│   │   │   ├── weibo.py
+│   │   │   ├── github_trending.py
+│   │   │   ├── hacker_news.py
+│   │   │   ├── news_rss.py
+│   │   │   └── custom_url/
+│   │   │       ├── base.py
+│   │   │       ├── generic_adapter.py
+│   │   │       ├── bilibili_adapter.py
+│   │   │       ├── zhihu_adapter.py
+│   │   │       ├── github_adapter.py
+│   │   │       └── news_adapter.py
+│   │   ├── services/
+│   │   │   ├── crawler_service.py
+│   │   │   ├── analysis_service.py
+│   │   │   ├── ai_service.py
+│   │   │   ├── export_service.py
+│   │   │   └── custom_url_service.py
+│   │   ├── security/
+│   │   │   ├── url_validator.py
+│   │   │   ├── rate_limit.py
+│   │   │   └── auth.py
+│   │   ├── scheduler/
+│   │   │   └── jobs.py
+│   │   └── utils/
+│   │       ├── logger.py
+│   │       ├── time.py
+│   │       └── text.py
+│   ├── requirements.txt
+│   ├── .env.example
+│   └── README.md
+│
+├── frontend/
+│   ├── src/
+│   │   ├── main.ts
+│   │   ├── App.vue
+│   │   ├── api/
+│   │   │   ├── hotspots.ts
+│   │   │   ├── analysis.ts
+│   │   │   ├── crawler.ts
+│   │   │   ├── export.ts
+│   │   │   └── customUrl.ts
+│   │   ├── router/
+│   │   │   └── index.ts
+│   │   ├── views/
+│   │   │   ├── Dashboard.vue
+│   │   │   ├── HotspotList.vue
+│   │   │   ├── PlatformRank.vue
+│   │   │   ├── TrendAnalysis.vue
+│   │   │   ├── AiAnalysis.vue
+│   │   │   ├── CustomUrl.vue
+│   │   │   └── Export.vue
+│   │   ├── components/
+│   │   │   ├── HotspotTable.vue
+│   │   │   ├── StatCard.vue
+│   │   │   ├── TrendChart.vue
+│   │   │   ├── KeywordCloud.vue
+│   │   │   ├── AiSummaryCard.vue
+│   │   │   └── CustomUrlResultCard.vue
+│   │   └── styles/
+│   │       └── index.css
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── README.md
+│
+├── mcp-server/
+│   ├── src/
+│   │   ├── index.ts
+│   │   ├── config.ts
+│   │   ├── auth.ts
+│   │   ├── client/
+│   │   │   └── fastapiClient.ts
+│   │   └── tools/
+│   │       ├── getTodayHotspots.ts
+│   │       ├── searchHotspots.ts
+│   │       ├── getPlatformHotspots.ts
+│   │       ├── analyzeDailyTrends.ts
+│   │       ├── comparePlatforms.ts
+│   │       ├── exportHotspotsExcel.ts
+│   │       ├── getCustomUrlAnalysis.ts
+│   │       └── searchCustomUrlResults.ts
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── .env.example
+│   └── README.md
+│
+├── docs/
+│   ├── DEPLOYMENT.md
+│   ├── API.md
+│   ├── MCP.md
+│   └── SECURITY.md
+│
+└── README.md
+五、数据库设计
+1. hotspots 表
+字段：
+- id
+- platform
+- rank
+- title
+- url
+- heat
+- category
+- author
+- summary
+- sentiment
+- keywords
+- captured_at
+- created_at
+- updated_at
+说明：
+用于保存固定平台热榜数据。
+2. daily_analysis 表
+字段：
+- id
+- date
+- summary
+- keywords
+- sentiment_overview
+- trend_opinion
+- platform_comparison
+- content_suggestions
+- created_at
+- updated_at
+说明：
+用于保存每日 AI 热点分析结果。
+3. custom_url_tasks 表
+字段：
+- id
+- url
+- domain
+- platform
+- title
+- description
+- content_excerpt
+- summary
+- keywords
+- sentiment
+- category
+- trend_opinion
+- status
+- error_message
+- created_at
+- updated_at
+status 可选值：
+- pending
+- fetching
+- analyzing
+- completed
+- failed
+- blocked
+说明：
+用于保存用户自定义链接采集和 AI 分析结果。
+六、固定平台热点采集功能
+需要实现多个 crawler，每个平台单独一个文件。
+统一输出字段：
+- platform
+- rank
+- title
+- url
+- heat
+- category
+- author
+- captured_at
+支持的平台先做这些：
+1. GitHub Trending
+2. Hacker News
+3. 新闻 RSS
+4. B站热门，先预留接口和解析结构
+5. 知乎热榜，先预留接口和解析结构
+6. 微博热搜，先预留接口和解析结构
+注意：
+对于可能有反爬、登录、验证码的网站，不要实现绕过逻辑。
+如果无法稳定抓取，就返回清晰错误，并在 README 中说明该平台需要公开接口或手动适配。
+爬虫要求：
+- 设置 User-Agent
+- 设置请求超时
+- 设置失败重试
+- 设置请求限速
+- 不高频请求
+- 不下载视频
+- 不下载大文件
+- 不采集隐私数据
+- 不绕过登录
+- 不绕过验证码
+- 不绕过付费墙
+七、用户自定义链接采集功能
+新增页面：
+“自定义链接采集”
+用户流程：
+1. 用户复制公开网页链接。
+2. 在前端输入框中粘贴 URL。
+3. 点击“开始分析”。
+4. 后端进行 URL 安全校验。
+5. 后端判断平台类型。
+6. 使用对应 adapter 解析页面。
+7. 没有专用 adapter 时使用 generic_adapter。
+8. 提取标题、描述、正文摘要。
+9. 调用 AI 分析。
+10. 保存数据库。
+11. 前端展示结果。
+前端展示内容：
+- 标题
+- 平台
+- 原始链接
+- AI 摘要
+- 关键词
+- 情绪判断
+- 内容分类
+- 趋势观点
+- 采集时间
+- 状态
+后端接口：
+- POST /api/custom-url/submit
+- GET /api/custom-url/tasks
+- GET /api/custom-url/tasks/{task_id}
+- POST /api/custom-url/analyze
+POST /api/custom-url/analyze 请求示例：
+{
+  "url": "https://example.com/news/xxx"
+}
+返回示例：
+{
+  "task_id": 1,
+  "status": "completed",
+  "title": "某热点事件正在发酵",
+  "platform": "example",
+  "summary": "该页面主要讨论……",
+  "keywords": ["AI", "科技", "热点"],
+  "sentiment": "中性",
+  "category": "科技",
+  "trend_opinion": "该话题有继续发酵可能",
+  "source_url": "https://example.com/news/xxx"
+}
+八、URL 安全校验要求
+必须新增 security/url_validator.py。
+这是重点安全模块，必须认真实现，防止系统被做成开放代理或 SSRF 攻击入口。
+必须实现：
+1. 只允许 http 和 https。
+2. 禁止 file://。
+3. 禁止 ftp://。
+4. 禁止 gopher://。
+5. 禁止 localhost。
+6. 禁止 127.0.0.1。
+7. 禁止 0.0.0.0。
+8. 禁止 ::1。
+9. 禁止内网 IP：
+   - 10.0.0.0/8
+   - 172.16.0.0/12
+   - 192.168.0.0/16
+10. 禁止链路本地地址：
+   - 169.254.0.0/16
+11. 禁止云服务器元数据地址：
+   - 169.254.169.254
+12. 禁止访问服务器本机地址。
+13. 限制重定向次数。
+14. 每次重定向后都要重新校验目标地址。
+15. 限制响应大小，例如最大 2MB。
+16. 设置请求超时，例如 10 秒。
+17. 设置单 IP 或单用户请求频率限制。
+18. 禁止下载视频、压缩包、可执行文件、大型二进制文件。
+19. 只接受 text/h
