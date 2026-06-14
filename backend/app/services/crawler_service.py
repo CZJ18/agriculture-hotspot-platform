@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from sqlalchemy import select
@@ -15,6 +16,7 @@ from app.crawlers import (
     ZhihuCrawler,
 )
 from app.crawlers.base import CrawlerAuthRequired, CrawlerError, HotspotItem
+from app.models.crawler_request import CrawlerRequestTask
 from app.models.hotspot import Hotspot
 from app.services.serialization import dumps_list, loads_list
 
@@ -35,6 +37,54 @@ CRAWLERS = {
 class CrawlerService:
     def __init__(self, db: Session) -> None:
         self.db = db
+
+    def create_request(self, platform: str, *, include_hotspots: bool = True, limit: int = 50) -> dict:
+        if platform != "all" and platform not in CRAWLERS:
+            raise CrawlerError(f"Unsupported platform: {platform}")
+        task = CrawlerRequestTask(platform=platform, include_hotspots=include_hotspots, limit=limit, status="pending")
+        self.db.add(task)
+        self.db.commit()
+        self.db.refresh(task)
+        return self.request_to_dict(task)
+
+    def get_request(self, request_id: int) -> dict | None:
+        task = self.db.get(CrawlerRequestTask, request_id)
+        return self.request_to_dict(task) if task else None
+
+    def list_requests(self, limit: int = 50) -> list[dict]:
+        stmt = select(CrawlerRequestTask).order_by(CrawlerRequestTask.created_at.desc()).limit(limit)
+        return [self.request_to_dict(task) for task in self.db.execute(stmt).scalars()]
+
+    def run_request(self, request_id: int) -> None:
+        task = self.db.get(CrawlerRequestTask, request_id)
+        if task is None:
+            return
+        task.status = "running"
+        task.error_message = None
+        self.db.commit()
+        try:
+            if task.platform == "all":
+                results = self.crawl_all_stable()
+                task.saved = sum(int(item.get("saved") or 0) for item in results)
+                task.result = json.dumps({"results": results}, ensure_ascii=False)
+            else:
+                result = self.crawl_platform(task.platform)
+                task.saved = int(result.get("saved") or 0)
+                task.result = json.dumps(result, ensure_ascii=False)
+            task.status = "completed"
+        except CrawlerAuthRequired as exc:
+            task.status = "auth_required"
+            task.error_message = exc.message
+            task.login_url = exc.login_url
+            task.cookie_env = exc.cookie_env
+            task.result = json.dumps(exc.to_dict(), ensure_ascii=False)
+        except CrawlerError as exc:
+            task.status = "error"
+            task.error_message = str(exc)
+            task.result = json.dumps({"status": "error", "platform": task.platform, "message": str(exc)}, ensure_ascii=False)
+        finally:
+            task.finished_at = datetime.utcnow()
+            self.db.commit()
 
     def list_hotspots(self, platform: str | None = None, limit: int = 100) -> list[dict]:
         stmt = select(Hotspot).order_by(Hotspot.captured_at.desc()).limit(limit)
@@ -107,3 +157,37 @@ class CrawlerService:
             "created_at": item.created_at,
             "updated_at": item.updated_at,
         }
+
+    def request_to_dict(self, task: CrawlerRequestTask) -> dict:
+        result = self._loads_result(task.result)
+        payload = {
+            "id": task.id,
+            "requestId": task.id,
+            "platform": task.platform,
+            "status": task.status,
+            "saved": task.saved,
+            "includeHotspots": task.include_hotspots,
+            "limit": task.limit,
+            "result": result,
+            "errorMessage": task.error_message,
+            "loginUrl": task.login_url,
+            "cookieEnv": task.cookie_env,
+            "createdAt": task.created_at,
+            "updatedAt": task.updated_at,
+            "finishedAt": task.finished_at,
+        }
+        if task.include_hotspots and task.status == "completed":
+            platform = None if task.platform == "all" else task.platform
+            payload["hotspots"] = self.list_hotspots(platform=platform, limit=task.limit)
+        else:
+            payload["hotspots"] = []
+        return payload
+
+    def _loads_result(self, value: str | None) -> dict:
+        if not value:
+            return {}
+        try:
+            decoded = json.loads(value)
+        except json.JSONDecodeError:
+            return {"message": value}
+        return decoded if isinstance(decoded, dict) else {"value": decoded}

@@ -6,6 +6,29 @@ export interface CrawlerAuthRequired {
   login_url: string;
   cookie_env: string;
   message: string;
+  request?: CrawlerRequest;
+}
+
+export interface CrawlerRequest {
+  platform: string;
+  includeHotspots?: boolean;
+  limit?: number;
+}
+
+export interface CrawlerRequestResult {
+  id: number;
+  requestId: number;
+  status: "accepted" | "pending" | "running" | "completed" | "auth_required" | "error";
+  platform: string;
+  saved?: number;
+  result?: Record<string, unknown>;
+  errorMessage?: string | null;
+  loginUrl?: string | null;
+  cookieEnv?: string | null;
+  hotspots: Array<Record<string, unknown>>;
+  createdAt?: string;
+  updatedAt?: string;
+  finishedAt?: string | null;
 }
 
 export function runStableCrawlers() {
@@ -14,6 +37,18 @@ export function runStableCrawlers() {
 
 export function runPlatformCrawler(platform: string) {
   return apiClient.post(`/crawler/run/${platform}`);
+}
+
+export function requestCrawler(payload: CrawlerRequest) {
+  return apiClient.post<CrawlerRequestResult>("/crawler/request", payload);
+}
+
+export function listCrawlerRequests(limit = 50) {
+  return apiClient.get<CrawlerRequestResult[]>("/crawler/requests", { params: { limit } });
+}
+
+export function getCrawlerRequest(requestId: number) {
+  return apiClient.get<CrawlerRequestResult>(`/crawler/requests/${requestId}`);
 }
 
 export function isCrawlerAuthRequired(error: unknown): error is { response: { status: 428; data: { detail: CrawlerAuthRequired } } } {

@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     mcp_bearer_token: str = "change-me"
     allowed_origins: List[str] = Field(default_factory=lambda: ["http://localhost:5173"])
 
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", enable_decoding=False)
 
     @field_validator("cors_origins", "allowed_origins", "video_ytdlp_allowed_domains", mode="before")
     @classmethod

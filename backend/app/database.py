@@ -31,6 +31,6 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    from app.models import analysis, custom_url_task, hotspot, resource, video_task  # noqa: F401
+    from app.models import analysis, crawler_request, custom_url_task, hotspot, resource, video_task  # noqa: F401
 
     Base.metadata.create_all(bind=engine)

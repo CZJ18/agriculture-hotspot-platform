@@ -11,6 +11,9 @@ Base URL: `http://localhost:8000/api`
 
 - `POST /crawler/run`
 - `POST /crawler/run/{platform}`
+- `POST /crawler/request`
+- `GET /crawler/requests`
+- `GET /crawler/requests/{request_id}`
 
 Platforms: `github_trending`, `hacker_news`, `news_rss`, `bilibili`, `zhihu`, `weibo`, `douyin`, `wechat_channels`, `youtube`.
 
@@ -32,6 +35,39 @@ The frontend should show a modal with the login URL and tell the user to update 
 
 YouTube uses the official YouTube Data API and requires `YOUTUBE_API_KEY`.
 WeChat Channels has no stable public anonymous hot-list API; configure `HOTSPOT_FALLBACK_BASE_URL` or handle login/manual data export.
+
+Frontend request flow:
+
+```http
+POST /crawler/request
+Content-Type: application/json
+```
+
+```json
+{
+  "platform": "bilibili",
+  "includeHotspots": true,
+  "limit": 50
+}
+```
+
+The API returns immediately:
+
+```json
+{
+  "status": "accepted",
+  "requestId": 12,
+  "platform": "bilibili"
+}
+```
+
+Then poll:
+
+```http
+GET /crawler/requests/12
+```
+
+Possible statuses: `pending`, `running`, `completed`, `auth_required`, `error`.
 
 ## Analysis
 
