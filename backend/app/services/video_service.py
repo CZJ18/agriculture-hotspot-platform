@@ -100,15 +100,7 @@ class VideoService:
         task.direct_video_url = metadata.direct_video_url
 
     def _maybe_download(self, task: VideoTask, metadata: VideoMetadata) -> None:
-        if not self.settings.video_download_enabled:
-            task.download_status = "blocked"
-            task.error_message = "Video download is disabled by VIDEO_DOWNLOAD_ENABLED."
-            return
         if not metadata.direct_video_url:
-            if not self.settings.video_ytdlp_enabled:
-                task.download_status = "blocked"
-                task.error_message = "No public direct video file URL was found. Enable VIDEO_YTDLP_ENABLED to use yt-dlp for supported platforms."
-                return
             task.download_path = str(YtDlpVideoDownloader().download(metadata.final_url))
             task.download_status = "completed"
             return

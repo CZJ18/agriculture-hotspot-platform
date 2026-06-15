@@ -8,7 +8,7 @@ from app.video.parsers.base import VideoMetadata
 
 
 class VideoYtDlpDownloaderTests(unittest.TestCase):
-    @patch.dict("os.environ", {"VIDEO_YTDLP_ENABLED": "true"})
+    @patch.dict("os.environ", {"VIDEO_DOWNLOAD_ENABLED": "false", "VIDEO_YTDLP_ENABLED": "false"})
     @patch("app.services.video_service.YtDlpVideoDownloader")
     def test_platform_download_uses_ytdlp_when_no_direct_video_url(self, downloader_cls):
         from app.config import get_settings
