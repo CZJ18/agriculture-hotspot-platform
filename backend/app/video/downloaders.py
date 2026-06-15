@@ -26,7 +26,7 @@ class YtDlpVideoDownloader:
         output_template = str(download_dir / f"{uuid4().hex}.%(ext)s")
         options = {
             "outtmpl": output_template,
-            "format": "b[ext=mp4]/best[ext=mp4]/best",
+            "format": "bv*[ext=mp4]+ba[ext=m4a]/bv*+ba/b[ext=mp4]/b",
             "merge_output_format": "mp4",
             "noplaylist": True,
             "max_filesize": self.settings.video_max_download_bytes,
@@ -37,6 +37,9 @@ class YtDlpVideoDownloader:
             "overwrites": False,
             "http_headers": self._http_headers(url),
         }
+        ffmpeg_location = self._ffmpeg_location()
+        if ffmpeg_location:
+            options["ffmpeg_location"] = ffmpeg_location
         if self.settings.video_ytdlp_cookie_file:
             cookie_path = Path(self.settings.video_ytdlp_cookie_file)
             if not cookie_path.exists():
@@ -80,3 +83,10 @@ class YtDlpVideoDownloader:
             headers["Referer"] = "https://www.youtube.com/"
             headers["Origin"] = "https://www.youtube.com"
         return headers
+
+    def _ffmpeg_location(self) -> str | None:
+        try:
+            import imageio_ffmpeg
+        except ImportError:
+            return None
+        return imageio_ffmpeg.get_ffmpeg_exe()
