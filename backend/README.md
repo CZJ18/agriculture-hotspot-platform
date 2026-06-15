@@ -74,6 +74,7 @@ Render free instances use temporary local files, so downloaded videos should be 
 
 ```env
 OBJECT_STORAGE_ENABLED=true
+OBJECT_STORAGE_PROVIDER=s3
 OBJECT_STORAGE_BUCKET=agriculture-videos
 OBJECT_STORAGE_ENDPOINT_URL=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
 OBJECT_STORAGE_ACCESS_KEY_ID=<R2_ACCESS_KEY_ID>
@@ -94,3 +95,21 @@ If `OBJECT_STORAGE_PUBLIC_BASE_URL` is empty, the API returns a temporary signed
 ```env
 OBJECT_STORAGE_PRESIGN_SECONDS=3600
 ```
+
+## Optional Supabase Storage
+
+Supabase Storage can be used instead of R2. Keep the service role key only on the backend/Render service:
+
+```env
+OBJECT_STORAGE_ENABLED=true
+OBJECT_STORAGE_PROVIDER=supabase
+OBJECT_STORAGE_PREFIX=videos
+OBJECT_STORAGE_PRESIGN_SECONDS=3600
+OBJECT_STORAGE_DELETE_LOCAL_AFTER_UPLOAD=true
+SUPABASE_URL=https://<PROJECT_REF>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<SUPABASE_SECRET_OR_SERVICE_ROLE_KEY>
+SUPABASE_STORAGE_BUCKET=agriculture-videos
+SUPABASE_STORAGE_PUBLIC=false
+```
+
+For a private bucket, the API returns a temporary signed URL. For a public bucket, set `SUPABASE_STORAGE_PUBLIC=true` and the API returns the public Storage URL.

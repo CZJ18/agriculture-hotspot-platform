@@ -51,6 +51,7 @@ class Settings(BaseSettings):
     )
     video_ytdlp_cookie_file: str = ""
     object_storage_enabled: bool = False
+    object_storage_provider: str = "s3"
     object_storage_bucket: str = ""
     object_storage_endpoint_url: str = ""
     object_storage_access_key_id: str = ""
@@ -60,6 +61,10 @@ class Settings(BaseSettings):
     object_storage_prefix: str = "videos"
     object_storage_presign_seconds: int = 3600
     object_storage_delete_local_after_upload: bool = True
+    supabase_url: str = ""
+    supabase_service_role_key: str = ""
+    supabase_storage_bucket: str = "agriculture-videos"
+    supabase_storage_public: bool = False
 
     mcp_bearer_token: str = "change-me"
     allowed_origins: List[str] = Field(default_factory=lambda: ["http://localhost:5173"])

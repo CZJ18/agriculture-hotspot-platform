@@ -7,4 +7,5 @@ node_modules/
 dist/
 downloads/
 .tools/
+.wrangler/
 .DS_Store
