@@ -35,6 +35,7 @@ class YtDlpVideoDownloader:
             "restrictfilenames": True,
             "continuedl": False,
             "overwrites": False,
+            "http_headers": self._http_headers(url),
         }
         if self.settings.video_ytdlp_cookie_file:
             cookie_path = Path(self.settings.video_ytdlp_cookie_file)
@@ -61,3 +62,21 @@ class YtDlpVideoDownloader:
         allowed = [domain.lower() for domain in self.settings.video_ytdlp_allowed_domains]
         if not any(host == domain or host.endswith(f".{domain}") for domain in allowed):
             raise URLValidationError(f"yt-dlp downloads are not allowed for host {host!r}.")
+
+    def _http_headers(self, url: str) -> dict[str, str]:
+        host = (urlparse(url).hostname or "").lower()
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/126.0.0.0 Safari/537.36"
+            ),
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+        }
+        if host == "bilibili.com" or host.endswith(".bilibili.com"):
+            headers["Referer"] = "https://www.bilibili.com/"
+            headers["Origin"] = "https://www.bilibili.com"
+        elif host == "youtube.com" or host.endswith(".youtube.com") or host == "youtu.be":
+            headers["Referer"] = "https://www.youtube.com/"
+            headers["Origin"] = "https://www.youtube.com"
+        return headers
