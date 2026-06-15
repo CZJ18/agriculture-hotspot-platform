@@ -11,6 +11,8 @@ from app.models.resource import (
     ResourceTopicVideo,
     ResourceVideo,
 )
+from app.models.video_task import VideoTask
+from app.services.video_service import VideoService
 
 
 class ResourceService:
@@ -52,11 +54,12 @@ class ResourceService:
         return {"items": [self.video_to_dict(item) for item in videos], "total": len(videos)}
 
     def create_video(self, payload: dict) -> dict:
+        payload = self._with_video_task_defaults(payload)
         video = ResourceVideo(
-            title=payload["title"],
-            source=payload["source"],
+            title=payload.get("title") or payload["sourceUrl"],
+            source=payload.get("source", "项目组"),
             source_url=payload["sourceUrl"],
-            category=payload["category"],
+            category=payload.get("category", "未分类"),
             tags=json.dumps(payload.get("tags") or [], ensure_ascii=False),
             description=payload.get("description", ""),
             cover=payload.get("cover", ""),
@@ -74,6 +77,7 @@ class ResourceService:
         video = self.db.get(ResourceVideo, video_id)
         if not video:
             return None
+        payload = self._with_video_task_defaults(payload)
         field_map = {
             "title": "title",
             "source": "source",
@@ -223,21 +227,110 @@ class ResourceService:
         return {"updated": len(notifications)}
 
     def video_to_dict(self, video: ResourceVideo) -> dict:
+        video_task = self._latest_video_task(video)
+        video_info = self._video_task_info(video_task)
         return {
             "id": video.id,
             "title": video.title,
             "source": video.source,
             "sourceUrl": video.source_url,
+            "finalUrl": video_info.get("finalUrl") if video_info else video.source_url,
+            "platform": video_info.get("platform") if video_info else self._platform_from_source(video.source),
             "category": video.category,
             "tags": json.loads(video.tags or "[]"),
             "description": video.description,
-            "cover": video.cover,
-            "duration": video.duration,
-            "views": video.views,
+            "cover": video.cover or (video_info.get("thumbnailUrl") if video_info else ""),
+            "thumbnailUrl": (video_info.get("thumbnailUrl") if video_info else None) or video.cover,
+            "duration": video.duration or (video_info.get("duration") if video_info else ""),
+            "views": video.views or (video_info.get("viewCount") if video_info else "0"),
+            "directVideoUrl": video_info.get("directVideoUrl") if video_info else None,
+            "downloadRequested": video_info.get("downloadRequested") if video_info else False,
+            "downloadStatus": video_info.get("downloadStatus") if video_info else "not_requested",
+            "downloadUrl": video_info.get("downloadUrl") if video_info else None,
+            "playUrl": self._play_url(video, video_info),
+            "videoTaskId": video_info.get("taskId") if video_info else None,
+            "videoInfo": video_info,
             "favorite": video.favorite,
             "createdAt": video.created_at.isoformat(),
             "notes": video.notes,
         }
+
+    def _with_video_task_defaults(self, payload: dict) -> dict:
+        task_id = payload.get("videoTaskId") or payload.get("video_task_id")
+        if not task_id:
+            return payload
+
+        task = self.db.get(VideoTask, int(task_id))
+        if task is None:
+            return payload
+
+        enriched = dict(payload)
+        enriched.setdefault("title", task.title or task.url)
+        enriched.setdefault("source", self._source_from_platform(task.platform))
+        enriched.setdefault("sourceUrl", task.url)
+        enriched.setdefault("description", task.description or "")
+        enriched.setdefault("cover", task.thumbnail_url or "")
+        enriched.setdefault("duration", task.duration or "")
+        enriched.setdefault("views", task.view_count or 0)
+        return enriched
+
+    def _latest_video_task(self, video: ResourceVideo) -> VideoTask | None:
+        stmt = (
+            select(VideoTask)
+            .where((VideoTask.url == video.source_url) | (VideoTask.final_url == video.source_url))
+            .order_by(VideoTask.created_at.desc(), VideoTask.id.desc())
+            .limit(1)
+        )
+        return self.db.execute(stmt).scalar_one_or_none()
+
+    def _video_task_info(self, task: VideoTask | None) -> dict | None:
+        if task is None:
+            return None
+
+        payload = VideoService(self.db)._to_dict(task)
+        return {
+            "taskId": payload["id"],
+            "url": payload["url"],
+            "finalUrl": payload["final_url"],
+            "platform": payload["platform"],
+            "title": payload["title"],
+            "author": payload["author"],
+            "description": payload["description"],
+            "thumbnailUrl": payload["thumbnail_url"],
+            "duration": payload["duration"],
+            "publishedAt": payload["published_at"],
+            "viewCount": payload["view_count"],
+            "directVideoUrl": payload["direct_video_url"],
+            "downloadRequested": payload["download_requested"],
+            "downloadStatus": payload["download_status"],
+            "downloadUrl": payload["download_url"],
+            "storagePath": payload["download_path"],
+            "status": payload["status"],
+            "errorMessage": payload["error_message"],
+        }
+
+    def _play_url(self, video: ResourceVideo, video_info: dict | None) -> str:
+        if video_info:
+            return video_info.get("downloadUrl") or video_info.get("directVideoUrl") or video_info.get("finalUrl") or video.source_url
+        return video.source_url
+
+    def _source_from_platform(self, platform: str | None) -> str:
+        mapping = {
+            "bilibili": "Bilibili",
+            "youtube": "YouTube",
+            "direct_video": "项目组",
+        }
+        return mapping.get((platform or "").lower(), "项目组")
+
+    def _platform_from_source(self, source: str) -> str:
+        mapping = {
+            "Bilibili": "bilibili",
+            "YouTube": "youtube",
+            "官网": "official",
+            "高校公开课": "course",
+            "项目组": "project",
+        }
+        return mapping.get(source, source.lower())
 
     def category_to_dict(self, category: ResourceCategory) -> dict:
         return {

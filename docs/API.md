@@ -139,6 +139,52 @@ Video query parameters:
 - `favorite`
 - `sort=latest|hot|favorite`
 
+Video responses include the display fields plus linked parse/download information when a matching `/video/parse` task exists for `sourceUrl`, or when `videoTaskId` is used while creating a resource:
+
+```json
+{
+  "id": 1,
+  "title": "智慧农业护航双丰收",
+  "source": "Bilibili",
+  "sourceUrl": "https://www.bilibili.com/video/BVxxx/",
+  "finalUrl": "https://www.bilibili.com/video/BVxxx/",
+  "platform": "bilibili",
+  "category": "智慧农业",
+  "tags": ["农业", "视频"],
+  "description": "视频简介",
+  "cover": "https://example.com/thumb.jpg",
+  "thumbnailUrl": "https://example.com/thumb.jpg",
+  "duration": "00:28",
+  "views": "1234",
+  "directVideoUrl": null,
+  "downloadRequested": true,
+  "downloadStatus": "completed",
+  "downloadUrl": "https://xabybmbmadzyujyctptc.supabase.co/storage/v1/object/sign/...",
+  "playUrl": "https://xabybmbmadzyujyctptc.supabase.co/storage/v1/object/sign/...",
+  "videoTaskId": 12,
+  "videoInfo": {
+    "taskId": 12,
+    "platform": "bilibili",
+    "downloadStatus": "completed",
+    "downloadUrl": "https://xabybmbmadzyujyctptc.supabase.co/storage/v1/object/sign/...",
+    "storagePath": "supabase://agriculture-videos/videos/xxx.mp4"
+  },
+  "favorite": false,
+  "createdAt": "2026-06-15T12:00:00",
+  "notes": ""
+}
+```
+
+To create a resource from a parsed/downloaded video task:
+
+```json
+{
+  "videoTaskId": 12,
+  "category": "智慧农业",
+  "tags": ["农业", "视频"]
+}
+```
+
 Categories:
 
 - `GET /resources/categories`
