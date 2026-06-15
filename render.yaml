@@ -46,9 +46,11 @@ services:
       - key: YOUTUBE_REGION_CODE
         value: US
       - key: VIDEO_DOWNLOAD_ENABLED
-        value: "false"
+        value: "true"
+      - key: VIDEO_MAX_DOWNLOAD_BYTES
+        value: "209715200"
       - key: VIDEO_YTDLP_ENABLED
-        value: "false"
+        value: "true"
       - key: VIDEO_YTDLP_ALLOWED_DOMAINS
         value: youtube.com,youtu.be,bilibili.com,b23.tv,douyin.com,iesdouyin.com,weibo.com
       - key: MCP_BEARER_TOKEN

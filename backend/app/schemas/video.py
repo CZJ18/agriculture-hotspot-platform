@@ -26,6 +26,7 @@ class VideoTaskRead(BaseModel):
     download_requested: bool
     download_status: str
     download_path: str | None = None
+    download_url: str | None = None
     status: str
     error_message: str | None = None
     created_at: datetime

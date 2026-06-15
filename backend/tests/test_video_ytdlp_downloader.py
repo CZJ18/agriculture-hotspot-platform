@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock, patch
 
@@ -33,6 +34,32 @@ class VideoYtDlpDownloaderTests(unittest.TestCase):
         downloader.download.assert_called_once_with(metadata.final_url)
         self.assertEqual(task.download_status, "completed")
         self.assertEqual(task.download_path, "downloads\\videos\\test.mp4")
+
+    def test_completed_download_returns_public_file_url(self):
+        task = Mock()
+        task.id = 1
+        task.url = "https://example.com/video.mp4"
+        task.final_url = "https://example.com/video.mp4"
+        task.platform = "direct_video"
+        task.title = "video"
+        task.author = None
+        task.description = None
+        task.thumbnail_url = None
+        task.duration = None
+        task.published_at = None
+        task.view_count = None
+        task.direct_video_url = "https://example.com/video.mp4"
+        task.download_requested = True
+        task.download_status = "completed"
+        task.download_path = "downloads/videos/test.mp4"
+        task.status = "completed"
+        task.error_message = None
+        task.created_at = datetime.utcnow()
+        task.updated_at = datetime.utcnow()
+
+        payload = VideoService(db=Mock())._to_dict(task)
+
+        self.assertEqual(payload["download_url"], "/api/video/files/test.mp4")
 
 
 if __name__ == "__main__":

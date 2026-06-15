@@ -26,7 +26,7 @@ class YtDlpVideoDownloader:
         output_template = str(download_dir / f"{uuid4().hex}.%(ext)s")
         options = {
             "outtmpl": output_template,
-            "format": "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4]/best[ext=mp4]/best",
+            "format": "b[ext=mp4]/best[ext=mp4]/best",
             "merge_output_format": "mp4",
             "noplaylist": True,
             "max_filesize": self.settings.video_max_download_bytes,

@@ -16,6 +16,7 @@ export interface VideoTask {
   download_requested: boolean;
   download_status: "not_requested" | "pending" | "completed" | "blocked" | "failed";
   download_path?: string;
+  download_url?: string;
   status: "pending" | "fetching" | "completed" | "blocked" | "failed";
   error_message?: string;
   created_at: string;
@@ -32,4 +33,12 @@ export function fetchVideoTasks() {
 
 export function fetchVideoTask(taskId: number) {
   return apiClient.get<VideoTask>(`/video/tasks/${taskId}`);
+}
+
+export function videoDownloadUrl(task: VideoTask) {
+  if (!task.download_url) {
+    return undefined;
+  }
+  const baseURL = apiClient.defaults.baseURL ?? "";
+  return task.download_url.startsWith("http") ? task.download_url : `${baseURL}${task.download_url.replace(/^\/api/, "")}`;
 }

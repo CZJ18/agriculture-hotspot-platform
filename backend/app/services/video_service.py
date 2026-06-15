@@ -156,6 +156,9 @@ class VideoService:
         return path
 
     def _to_dict(self, task: VideoTask) -> dict:
+        download_url = None
+        if task.download_path and task.download_status == "completed":
+            download_url = f"/api/video/files/{Path(task.download_path).name}"
         return {
             "id": task.id,
             "url": task.url,
@@ -172,6 +175,7 @@ class VideoService:
             "download_requested": task.download_requested,
             "download_status": task.download_status,
             "download_path": task.download_path,
+            "download_url": download_url,
             "status": task.status,
             "error_message": task.error_message,
             "created_at": task.created_at,
