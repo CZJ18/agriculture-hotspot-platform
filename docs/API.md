@@ -139,6 +139,8 @@ Video query parameters:
 - `favorite`
 - `sort=latest|hot|favorite`
 
+All resource endpoints that return a video object use the same shape. This includes `GET /resources/videos`, `POST /resources/videos`, `PUT /resources/videos/{video_id}`, favorite/notes updates, `GET /resources/topics/{topic_id}/videos`, and the nested `video` returned by `POST /resources/topics/{topic_id}/videos`.
+
 Video responses include the display fields plus linked parse/download information when a matching `/video/parse` task exists for `sourceUrl`, or when `videoTaskId` is used while creating a resource:
 
 ```json
@@ -203,6 +205,27 @@ Topics:
 - `GET /resources/topics/{topic_id}/videos`
 - `POST /resources/topics/{topic_id}/videos`
 - `DELETE /resources/topics/{topic_id}/videos/{video_id}`
+
+`POST /resources/topics/{topic_id}/videos` response:
+
+```json
+{
+  "topicId": 1,
+  "videoId": 12,
+  "added": true,
+  "video": {
+    "id": 12,
+    "title": "智慧农业护航双丰收",
+    "downloadStatus": "completed",
+    "downloadUrl": "https://xabybmbmadzyujyctptc.supabase.co/storage/v1/object/sign/...",
+    "playUrl": "https://xabybmbmadzyujyctptc.supabase.co/storage/v1/object/sign/...",
+    "videoInfo": {
+      "taskId": 12,
+      "storagePath": "supabase://agriculture-videos/videos/xxx.mp4"
+    }
+  }
+}
+```
 
 Notifications:
 

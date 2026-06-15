@@ -67,6 +67,21 @@ class ResourceVideoInfoTests(unittest.TestCase):
         self.assertEqual(item["downloadUrl"], "/api/video/files/agri.mp4")
         self.assertEqual(item["videoInfo"]["downloadStatus"], "completed")
 
+    def test_create_resource_video_requires_source_or_valid_task(self) -> None:
+        missing_source = self.client.post(
+            "/api/resources/videos",
+            json={"title": "No source"},
+        )
+        self.assertEqual(missing_source.status_code, 400)
+        self.assertIn("sourceUrl", missing_source.json()["detail"])
+
+        missing_task = self.client.post(
+            "/api/resources/videos",
+            json={"videoTaskId": 987654321},
+        )
+        self.assertEqual(missing_task.status_code, 400)
+        self.assertIn("was not found", missing_task.json()["detail"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -15,6 +15,10 @@ from app.models.video_task import VideoTask
 from app.services.video_service import VideoService
 
 
+class ResourceInputError(ValueError):
+    pass
+
+
 class ResourceService:
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -55,6 +59,9 @@ class ResourceService:
 
     def create_video(self, payload: dict) -> dict:
         payload = self._with_video_task_defaults(payload)
+        if not payload.get("sourceUrl"):
+            raise ResourceInputError("sourceUrl or a valid videoTaskId is required.")
+
         video = ResourceVideo(
             title=payload.get("title") or payload["sourceUrl"],
             source=payload.get("source", "项目组"),
@@ -179,13 +186,17 @@ class ResourceService:
         return self.topic_to_dict(topic)
 
     def add_video_to_topic(self, topic_id: int, video_id: int) -> dict:
+        video = self.db.get(ResourceVideo, video_id)
+        if video is None:
+            raise ResourceInputError(f"Video {video_id} was not found.")
+
         existing = self.db.execute(
             select(ResourceTopicVideo).where(ResourceTopicVideo.topic_id == topic_id, ResourceTopicVideo.video_id == video_id)
         ).scalar_one_or_none()
         if existing is None:
             self.db.add(ResourceTopicVideo(topic_id=topic_id, video_id=video_id))
             self.db.commit()
-        return {"topicId": topic_id, "videoId": video_id, "added": True}
+        return {"topicId": topic_id, "videoId": video_id, "added": True, "video": self.video_to_dict(video)}
 
     def remove_video_from_topic(self, topic_id: int, video_id: int) -> dict:
         self.db.execute(delete(ResourceTopicVideo).where(ResourceTopicVideo.topic_id == topic_id, ResourceTopicVideo.video_id == video_id))
@@ -260,9 +271,13 @@ class ResourceService:
         if not task_id:
             return payload
 
-        task = self.db.get(VideoTask, int(task_id))
+        try:
+            task = self.db.get(VideoTask, int(task_id))
+        except (TypeError, ValueError) as exc:
+            raise ResourceInputError("videoTaskId must be a number.") from exc
+
         if task is None:
-            return payload
+            raise ResourceInputError(f"Video task {task_id} was not found.")
 
         enriched = dict(payload)
         enriched.setdefault("title", task.title or task.url)

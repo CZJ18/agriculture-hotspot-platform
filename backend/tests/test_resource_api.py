@@ -72,6 +72,10 @@ class ResourceApiTests(unittest.TestCase):
         topic_id = topic.json()["id"]
         add_video = self.client.post(f"/api/resources/topics/{topic_id}/videos", json={"videoId": video_id})
         self.assertEqual(add_video.status_code, 200)
+        self.assertEqual(add_video.json()["video"]["id"], video_id)
+        self.assertIn("playUrl", add_video.json()["video"])
+        self.assertIn("downloadStatus", add_video.json()["video"])
+        self.assertIn("videoInfo", add_video.json()["video"])
         topic_videos = self.client.get(f"/api/resources/topics/{topic_id}/videos")
         self.assertEqual(topic_videos.status_code, 200)
         self.assertEqual(topic_videos.json()["total"], 1)

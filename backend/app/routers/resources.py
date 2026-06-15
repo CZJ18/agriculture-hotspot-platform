@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.services.resource_service import ResourceService
+from app.services.resource_service import ResourceInputError, ResourceService
 
 router = APIRouter(prefix="/resources", tags=["resources"])
 
@@ -22,12 +22,18 @@ def list_videos(
 
 @router.post("/videos")
 def create_video(payload: dict, db: Session = Depends(get_db)) -> dict:
-    return ResourceService(db).create_video(payload)
+    try:
+        return ResourceService(db).create_video(payload)
+    except ResourceInputError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.put("/videos/{video_id}")
 def update_video(video_id: int, payload: dict, db: Session = Depends(get_db)) -> dict:
-    video = ResourceService(db).update_video(video_id, payload)
+    try:
+        video = ResourceService(db).update_video(video_id, payload)
+    except ResourceInputError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     if video is None:
         raise HTTPException(status_code=404, detail="Video not found.")
     return video
@@ -118,7 +124,10 @@ def topic_videos(topic_id: int, db: Session = Depends(get_db)) -> dict:
 
 @router.post("/topics/{topic_id}/videos")
 def add_video_to_topic(topic_id: int, payload: dict, db: Session = Depends(get_db)) -> dict:
-    return ResourceService(db).add_video_to_topic(topic_id, int(payload["videoId"]))
+    try:
+        return ResourceService(db).add_video_to_topic(topic_id, int(payload["videoId"]))
+    except (KeyError, TypeError, ValueError, ResourceInputError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.delete("/topics/{topic_id}/videos/{video_id}")
