@@ -33,8 +33,6 @@ class ResourceService:
         sort: str = "latest",
     ) -> dict:
         stmt = select(ResourceVideo)
-        if keyword:
-            stmt = stmt.where(ResourceVideo.title.contains(keyword) | ResourceVideo.description.contains(keyword))
         if category:
             stmt = stmt.where(ResourceVideo.category == category)
         if source:
@@ -42,6 +40,8 @@ class ResourceService:
         if favorite is not None:
             stmt = stmt.where(ResourceVideo.favorite == favorite)
         videos = list(self.db.execute(stmt).scalars())
+        if keyword:
+            videos = [video for video in videos if self._matches_keyword(video, keyword)]
         if topic_id is not None:
             ids = {
                 row.video_id
@@ -383,3 +383,18 @@ class ResourceService:
             return float(value)
         except (TypeError, ValueError):
             return 0.0
+
+    def _matches_keyword(self, video: ResourceVideo, keyword: str) -> bool:
+        needle = keyword.strip().casefold()
+        if not needle:
+            return True
+        tags = " ".join(json.loads(video.tags or "[]"))
+        fields = [
+            video.title,
+            video.description,
+            video.category,
+            video.source,
+            video.source_url,
+            tags,
+        ]
+        return any(needle in (field or "").casefold() for field in fields)
