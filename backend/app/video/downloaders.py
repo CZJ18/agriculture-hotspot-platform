@@ -33,8 +33,13 @@ class YtDlpVideoDownloader:
             "quiet": True,
             "no_warnings": True,
             "restrictfilenames": True,
-            "continuedl": False,
+            "continuedl": True,
             "overwrites": False,
+            "retries": 5,
+            "fragment_retries": 5,
+            "file_access_retries": 3,
+            "extractor_retries": 3,
+            "socket_timeout": 30,
             "http_headers": self._http_headers(url),
         }
         ffmpeg_location = self._ffmpeg_location()
