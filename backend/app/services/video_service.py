@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.models.video_task import VideoTask
 from app.security.url_validator import URLValidationError, fetch_public_text, validate_url
+from app.storage import ObjectStorageService
 from app.video.parsers import BilibiliVideoParser, GenericVideoParser, YouTubeVideoParser
 from app.video.parsers.base import VideoMetadata, VideoParser
 from app.video.downloaders import YtDlpVideoDownloader
@@ -101,11 +102,21 @@ class VideoService:
 
     def _maybe_download(self, task: VideoTask, metadata: VideoMetadata) -> None:
         if not metadata.direct_video_url:
-            task.download_path = str(YtDlpVideoDownloader().download(metadata.final_url))
+            task.download_path = str(self._persist_download(YtDlpVideoDownloader().download(metadata.final_url)))
             task.download_status = "completed"
             return
-        task.download_path = str(self._download_direct_video(metadata.direct_video_url))
+        task.download_path = str(self._persist_download(self._download_direct_video(metadata.direct_video_url)))
         task.download_status = "completed"
+
+    def _persist_download(self, path: Path) -> Path | str:
+        storage = ObjectStorageService()
+        if not storage.enabled():
+            return path
+
+        storage_uri = storage.upload_file(path)
+        if self.settings.object_storage_delete_local_after_upload:
+            path.unlink(missing_ok=True)
+        return storage_uri
 
     def _download_direct_video(self, url: str) -> Path:
         current = validate_url(url, resolve_dns=True).normalized_url
@@ -150,7 +161,11 @@ class VideoService:
     def _to_dict(self, task: VideoTask) -> dict:
         download_url = None
         if task.download_path and task.download_status == "completed":
-            download_url = f"/api/video/files/{Path(task.download_path).name}"
+            storage = ObjectStorageService()
+            if storage.is_storage_uri(task.download_path):
+                download_url = storage.download_url(task.download_path)
+            else:
+                download_url = f"/api/video/files/{Path(task.download_path).name}"
         return {
             "id": task.id,
             "url": task.url,

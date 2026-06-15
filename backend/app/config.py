@@ -50,6 +50,16 @@ class Settings(BaseSettings):
         ]
     )
     video_ytdlp_cookie_file: str = ""
+    object_storage_enabled: bool = False
+    object_storage_bucket: str = ""
+    object_storage_endpoint_url: str = ""
+    object_storage_access_key_id: str = ""
+    object_storage_secret_access_key: str = ""
+    object_storage_region: str = "auto"
+    object_storage_public_base_url: str = ""
+    object_storage_prefix: str = "videos"
+    object_storage_presign_seconds: int = 3600
+    object_storage_delete_local_after_upload: bool = True
 
     mcp_bearer_token: str = "change-me"
     allowed_origins: List[str] = Field(default_factory=lambda: ["http://localhost:5173"])

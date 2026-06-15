@@ -67,3 +67,30 @@ VIDEO_YTDLP_COOKIE_FILE=
 ```
 
 Enable it only for content the user has permission to download. This project does not implement DRM, paywall, login, CAPTCHA, or anti-bot bypass.
+
+## Optional Cloudflare R2 Storage
+
+Render free instances use temporary local files, so downloaded videos should be uploaded to object storage for long-term access. Cloudflare R2 works through its S3-compatible API:
+
+```env
+OBJECT_STORAGE_ENABLED=true
+OBJECT_STORAGE_BUCKET=agriculture-videos
+OBJECT_STORAGE_ENDPOINT_URL=https://<ACCOUNT_ID>.r2.cloudflarestorage.com
+OBJECT_STORAGE_ACCESS_KEY_ID=<R2_ACCESS_KEY_ID>
+OBJECT_STORAGE_SECRET_ACCESS_KEY=<R2_SECRET_ACCESS_KEY>
+OBJECT_STORAGE_REGION=auto
+OBJECT_STORAGE_PREFIX=videos
+OBJECT_STORAGE_DELETE_LOCAL_AFTER_UPLOAD=true
+```
+
+If the bucket is public or has a custom domain, set:
+
+```env
+OBJECT_STORAGE_PUBLIC_BASE_URL=https://cdn.example.com
+```
+
+If `OBJECT_STORAGE_PUBLIC_BASE_URL` is empty, the API returns a temporary signed download URL. Control its lifetime with:
+
+```env
+OBJECT_STORAGE_PRESIGN_SECONDS=3600
+```
