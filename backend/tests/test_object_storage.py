@@ -76,7 +76,7 @@ class ObjectStorageServiceTests(unittest.TestCase):
         from app.config import get_settings
 
         get_settings.cache_clear()
-        post.return_value = Mock(status_code=200, text="{}", json=lambda: {"signedURL": "/storage/v1/object/sign/path?token=abc"})
+        post.return_value = Mock(status_code=200, text="{}", json=lambda: {"signedURL": "/object/sign/path?token=abc"})
 
         url = ObjectStorageService().download_url("supabase://agriculture-videos/videos/test.mp4")
 

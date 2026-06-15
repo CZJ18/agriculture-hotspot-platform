@@ -133,6 +133,8 @@ class ObjectStorageService:
         signed_url = payload.get("signedURL") or payload.get("signedUrl") or payload.get("signed_url")
         if not signed_url:
             raise ObjectStorageError("Supabase signed URL response did not include a signed URL.")
+        if signed_url.startswith("/object/"):
+            signed_url = f"/storage/v1{signed_url}"
         return signed_url if signed_url.startswith("http") else self._supabase_url(signed_url)
 
     def _parse_storage_uri(self, storage_uri: str) -> tuple[str, str]:
